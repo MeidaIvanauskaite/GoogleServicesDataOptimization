@@ -64,3 +64,11 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## How to start the program
+
+Update .env file with your keys
+Update /storage/credentials/google_credentials.json file with Google Cliud service account generated key
+Terminal command: chmod +x start.sh
+Terminal command: ./start.sh
+Then open http://localhost/
