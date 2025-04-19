@@ -1,14 +1,19 @@
 #!/bin/bash
 
-echo "📦 Installing Node & Composer dependencies..."
-npm install
-docker exec -it php-app composer install
-
 echo "🧱 Starting Docker containers..."
 docker-compose up --build -d
 
-echo "⚙️ Starting Vite..."
-npm run dev
+echo "📦 Installing Composer dependencies..."
+docker exec -it php_app composer install
+docker exec -it php_app chmod -R 775 storage bootstrap/cache
+docker exec -it php_app chown -R www-data:www-data storage bootstrap/cache
 
-#! ./start.sh
-#! http://localhost/
+echo "⚙️ Running migrations..."
+docker exec -it php_app php artisan migrate --force
+docker exec -it php_app php artisan db:seed --class=UserSeeder
+
+echo "⚡ Installing Node/Vite dependencies..."
+npm install
+
+echo "🧪 Starting Vite..."
+npm run dev
