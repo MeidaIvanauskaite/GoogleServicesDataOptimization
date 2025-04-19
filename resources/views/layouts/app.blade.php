@@ -19,7 +19,7 @@
 
             <!-- Header -->
             <nav class="navbar navbar-expand-lg navbar-dark bg-primary px-4">
-                <a class="navbar-brand" href="#">Google Optimizer</a>
+                <a class="navbar-brand" href="#">Google Services Data Optimizer</a>
                 <div class="ms-auto d-flex align-items-center">
                     @auth
                         <span class="text-white me-3">
