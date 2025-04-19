@@ -5,7 +5,6 @@
     use App\Http\Controllers\PageSpeedController;
     use App\Http\Controllers\ExportController;
     use App\Http\Controllers\Auth\RegisteredUserController;
-    use App\Jobs\FetchAnalyticsData;
     use App\Services\GoogleService;
 
     Route::get('/', function () {
@@ -37,12 +36,5 @@
     });
 
     Route::get('/service-accounts/{accountId}', [GoogleAnalyticsController::class, 'fetchWebProperties']);
-
-    Route::get('/trigger-job', function () {
-        FetchAnalyticsData::dispatch();
-        return response()->json(['message' => 'Job dispatched!']);
-    });
-
-    // http://localhost:5000/analytics
 
     require __DIR__.'/auth.php';
