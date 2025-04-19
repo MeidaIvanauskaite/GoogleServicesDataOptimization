@@ -1,6 +1,8 @@
 services:
   app:
-    image: php:8.2-fpm
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: php_app
     volumes:
       - .:/var/www/html
@@ -9,16 +11,7 @@ services:
       - seo-network
     depends_on:
       - db
-    command: >
-      sh -c "
-      docker-php-ext-install pdo_mysql &&
-      pecl install redis &&
-      docker-php-ext-enable redis &&
-      php artisan migrate --force &&
-      php artisan db:seed --class=UserSeeder &&
-      php-fpm &&
-      while true; do php artisan schedule:run; sleep 60; done
-      "
+    command: php-fpm
 
   web:
     image: nginx:alpine
@@ -58,23 +51,6 @@ services:
       APACHE_SERVER_NAME: phpmyadmin.local
     depends_on:
       - db
-    networks:
-      - seo-network
-
-  python:
-    image: python:3.9-slim
-    container_name: python_service
-    working_dir: /app
-    volumes:
-      - ./ai:/app
-      - ./path/to/new/google_credentials.json:/var/www/html/storage/credentials/google_credentials.json
-    command: >
-      sh -c "
-      pip install --no-cache-dir -r requirements.txt &&
-      python app.py
-      "
-    ports:
-      - "5000:5000"
     networks:
       - seo-network
 
