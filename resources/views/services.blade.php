@@ -86,6 +86,7 @@
                                                 $property = $propertyData['raw'];
                                                 $meta = $propertyData['meta'];
                                                 $uniqueId = str_replace(['/', '.'], '_', $property->name);
+                                                $shouldBeOpen = session('expanded_property') === $property->name;
                                                 $pagespeed = \App\Models\PageSpeedResult::where('property_id', $property->name)->first();
                                             @endphp
 
@@ -104,9 +105,8 @@
                                                 <span class="badge bg-success">{{ $property->serviceLevel }}</span>
                                             </p>
 
-                                            <div class="collapse" id="propertyDetails-{{ $uniqueId }}">
+                                            <div class="collapse {{ $shouldBeOpen ? 'show' : '' }}" id="propertyDetails-{{ $uniqueId }}">
                                                 @if(Auth::user()->role === 'admin')
-                                                    <!-- Admin Editable Fields -->
                                                     <form method="POST" action="{{ route('update.property.meta') }}" class="mb-3">
                                                         @csrf
                                                         <input type="hidden" name="property_id" value="{{ $property->name }}">
@@ -132,28 +132,6 @@
 
                                                         <button type="submit" class="btn btn-primary btn-sm">Save</button>
                                                     </form>
-
-                                                    <!-- PageSpeed Form -->
-                                                    <form method="POST" action="{{ route('pagespeed.scan') }}" class="mb-2">
-                                                        @csrf
-                                                        <input type="hidden" name="property_id" value="{{ $property->name }}">
-                                                        <div class="input-group">
-                                                            <input type="text" name="url" placeholder="https://example.com" class="form-control" required>
-                                                            <button class="btn btn-outline-success" type="submit">Scan PageSpeed</button>
-                                                        </div>
-                                                    </form>
-
-                                                    @if($pagespeed)
-                                                        <div class="mt-2">
-                                                            <p class="mb-1"><strong>URL:</strong> {{ $pagespeed->url }}</p>
-                                                            <p><strong>Performance Score:</strong> {{ $pagespeed->performance_score }}</p>
-                                                            <ul>
-                                                                <li>LCP (loading): {{ $pagespeed->metrics['LCP'] ?? 'N/A' }}</li>
-                                                                <li>FID (interactivity): {{ $pagespeed->metrics['FID'] ?? 'N/A' }}</li>
-                                                                <li>CLS: (visual stability) {{ $pagespeed->metrics['CLS'] ?? 'N/A' }}</li>
-                                                            </ul>
-                                                        </div>
-                                                    @endif
                                                 @else
                                                     @if ($meta)
                                                         <p class="mt-2">
@@ -162,6 +140,17 @@
                                                             <strong>Note:</strong> {{ $meta->note }}
                                                         </p>
                                                     @endif
+                                                    <form method="POST" action="{{ route('pagespeed.scan') }}" class="mb-2">
+                                                        <input type="hidden" name="property_id" value="{{ $property->name }}">
+                                                        <div class="input-group">
+                                                            <input type="text" name="url" placeholder="https://example.com" class="form-control" required>
+                                                            <button class="btn btn-outline-success" type="submit">Scan PageSpeed</button>
+                                                        </div>
+
+                                                        @if ($errors->has('url'))
+                                                            <div class="alert alert-danger mt-2"> {{ $errors->first('url') }}</div>
+                                                        @endif
+                                                    </form>
                                                     @if($pagespeed)
                                                         <div class="mt-2">
                                                             <h5><strong>PageSpeed Results:</strong></h5>
