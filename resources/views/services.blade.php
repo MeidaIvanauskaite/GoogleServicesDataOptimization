@@ -45,7 +45,6 @@
         <a href="{{ route('export.pdf', request()->query()) }}" class="btn btn-outline-secondary btn-sm">Export PDF</a>
     </div>
 
-    <!-- Accounts & Properties -->
     @if (isset($error))
         <div class="alert alert-danger">
             <strong>Error:</strong> {{ $error }}
@@ -108,7 +107,6 @@
                                             <div class="collapse {{ $shouldBeOpen ? 'show' : '' }}" id="propertyDetails-{{ $uniqueId }}">
                                                 @if(Auth::user()->role === 'admin')
                                                     <form method="POST" action="{{ route('update.property.meta') }}" class="mb-3">
-                                                        @csrf
                                                         <input type="hidden" name="property_id" value="{{ $property->name }}">
 
                                                         <div class="mb-2">
@@ -132,14 +130,7 @@
 
                                                         <button type="submit" class="btn btn-primary btn-sm">Save</button>
                                                     </form>
-                                                @else
-                                                    @if ($meta)
-                                                        <p class="mt-2">
-                                                            <strong>Tag:</strong> {{ $meta->tag }}<br>
-                                                            <strong>Status:</strong> {{ $meta->status }}<br>
-                                                            <strong>Note:</strong> {{ $meta->note }}
-                                                        </p>
-                                                    @endif
+
                                                     <form method="POST" action="{{ route('pagespeed.scan') }}" class="mb-2">
                                                         <input type="hidden" name="property_id" value="{{ $property->name }}">
                                                         <div class="input-group">
@@ -151,6 +142,26 @@
                                                             <div class="alert alert-danger mt-2"> {{ $errors->first('url') }}</div>
                                                         @endif
                                                     </form>
+
+                                                    @if($pagespeed)
+                                                        <div class="mt-2">
+                                                            <p class="mb-1"><strong>URL:</strong> {{ $pagespeed->url }}</p>
+                                                            <p><strong>Performance Score:</strong> {{ $pagespeed->performance_score }}</p>
+                                                            <ul>
+                                                                <li>LCP (loading): {{ $pagespeed->metrics['LCP'] ?? 'N/A' }}</li>
+                                                                <li>FID (interactivity): {{ $pagespeed->metrics['FID'] ?? 'N/A' }}</li>
+                                                                <li>CLS: (visual stability) {{ $pagespeed->metrics['CLS'] ?? 'N/A' }}</li>
+                                                            </ul>
+                                                        </div>
+                                                    @endif
+                                                @else
+                                                    @if ($meta)
+                                                        <p class="mt-2">
+                                                            <strong>Tag:</strong> {{ $meta->tag }}<br>
+                                                            <strong>Status:</strong> {{ $meta->status }}<br>
+                                                            <strong>Note:</strong> {{ $meta->note }}
+                                                        </p>
+                                                    @endif
                                                     @if($pagespeed)
                                                         <div class="mt-2">
                                                             <h5><strong>PageSpeed Results:</strong></h5>
