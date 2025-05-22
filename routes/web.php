@@ -18,10 +18,8 @@
     });
 
     Route::middleware(['auth'])->post('/update-property-meta', [PropertyMetadataController::class, 'update'])->name('update.property.meta');
-
     Route::get('/export/csv', [ExportController::class, 'exportCSV'])->name('export.csv');
     Route::get('/export/pdf', [ExportController::class, 'exportPDF'])->name('export.pdf');
-
     Route::post('/pagespeed-scan', [PageSpeedController::class, 'scan'])->name('pagespeed.scan');
 
 
