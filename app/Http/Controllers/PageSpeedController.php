@@ -39,6 +39,10 @@
                 ]
             );
 
-            return redirect()->back()->with('success', 'PageSpeed data fetched!');
+            return redirect()->back()->with([
+                'success' => 'PageSpeed scan complete.',
+                'expanded_property' => $request->property_id,
+            ]);
+            
         }
     }
