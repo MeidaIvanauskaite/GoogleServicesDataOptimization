@@ -21,6 +21,9 @@
                 ]
             );
 
-            return redirect()->back()->with('success', 'Property metadata updated successfully.');
+            return redirect()->back()->with([
+                'success' => 'Property metadata updated and saved successfully.',
+                'expanded_property' => $request->property_id,
+            ]);   
         }
     }
