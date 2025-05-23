@@ -4,6 +4,7 @@
     use App\Http\Controllers\PropertyMetadataController;
     use App\Http\Controllers\PageSpeedController;
     use App\Http\Controllers\ExportController;
+    use App\Http\Controllers\Admin\UserManagementController;
     use App\Http\Controllers\Auth\RegisteredUserController;
     use App\Services\GoogleService;
 
@@ -21,6 +22,14 @@
     Route::get('/export/csv', [ExportController::class, 'exportCSV'])->name('export.csv');
     Route::get('/export/pdf', [ExportController::class, 'exportPDF'])->name('export.pdf');
     Route::post('/pagespeed-scan', [PageSpeedController::class, 'scan'])->name('pagespeed.scan');
+
+    Route::middleware(['auth'])->group(function () {
+        Route::get('/users', [UserManagementController::class, 'index'])->middleware('admin')->name('admin.users');
+        Route::post('/users/{user}/role', [UserManagementController::class, 'updateRole'])->middleware('admin')->name('admin.users.updateRole');
+        Route::delete('/users/{user}', [UserManagementController::class, 'destroy'])->middleware('admin')->name('admin.users.delete');
+    });
+
+    Route::post('/users', [UserManagementController::class, 'store'])->name('admin.users.create');
 
 
     // JSON data return
