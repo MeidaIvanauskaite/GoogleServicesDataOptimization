@@ -28,14 +28,17 @@
                                 <span class="badge bg-warning text-black ms-2">Admin</span>
                             @endif
                         </span>
-                        <form method="POST" action="{{ route('logout') }}" class="d-inline">
+                        @if(Auth::user()->role === 'admin')
+                            <a href="{{ route('admin.users') }}" class="btn btn-outline-light btn-sm me-2">
+                                👥 Manage Users
+                            </a>
+                        @endif
+                        <form method="POST" action="{{ route('logout') }}">
                             @csrf
                             <button type="submit" class="btn btn-outline-light btn-sm">Logout</button>
                         </form>
-                        @if(Auth::check())
-                            <button id="themeToggle" class="btn btn-sm btn-outline-light ms-2">🌙 Dark Mode</button>
-                        @endif
                     @endauth
+                    <button id="themeToggle" class="btn btn-sm btn-outline-light ms-2">🌙 Dark Mode</button>
                     <button class="btn btn-sm btn-outline-light ms-2" data-bs-toggle="modal" data-bs-target="#helpModal">
                         ❓ Help
                     </button>
