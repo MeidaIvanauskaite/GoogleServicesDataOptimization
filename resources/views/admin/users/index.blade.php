@@ -7,6 +7,9 @@
     @endif
 
     <div class="d-flex justify-content-between align-items-center mb-3">
+            <a href="{{ route('services') }}" class="btn btn-outline-secondary">
+                ⬅️ Go Back
+            </a>
         <h2>User Management</h2>
         <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addUserModal">
             ➕ Add User
