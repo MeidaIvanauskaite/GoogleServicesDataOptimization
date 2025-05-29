@@ -76,7 +76,7 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
 ## Programos atsisiuntimo ir paleidimo instrukcijos:
 
 1. Programos failus galima klonuoti naudojant terminalo komandą git clone
-https://github.com/MeidaIvanauskaite/GoogleServicesDataOptimization.git.
+https://github.com/MeidaIvanauskaite/GoogleServicesDataOptimization.git. (wsl.localhost projektuose)
 2. Sukurkite .env failą nukopijuojant .env.example failo turinį. Šiame faile reikia pridėti
 Google paslaugų paskyros rakto kelią ir PageSpeed API raktą.
 3. Reikia atsisiųsti Docker ir atidaryti jį programos naudojimo metu.
