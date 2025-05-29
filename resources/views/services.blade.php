@@ -15,8 +15,8 @@
     @endif
     <h1 class="mb-4 text-center">Google Analytics Accounts and Properties</h1>
 
-    <!-- Search & Filter -->
     <form method="GET" action="{{ route('services') }}" class="row g-3 mb-4">
+        @csrf
         <div class="col-md-4">
             <input type="text" name="search" class="form-control" placeholder="Search by property name" value="{{ request('search') }}">
         </div>
@@ -42,9 +42,11 @@
     <!-- Export files -->
     <div class="mb-3">
         <a href="{{ route('export.csv', request()->query()) }}" class="btn btn-outline-secondary btn-sm me-2">Export CSV</a>
-        <a href="{{ route('export.pdf', request()->query()) }}" class="btn btn-outline-secondary btn-sm">Export PDF</a>
+        <a href="{{ route('export.pdf', request()->query()) }}" class="btn btn-outline-secondary btn-sm me-2">Export PDF</a>
+        <a href="{{ route('services', ['refresh' => 1]) }}" class="btn btn-outline-primary btn-sm">🔄 Refresh Data from Google</a>
     </div>
 
+    <!-- Accounts & Properties -->
     @if (isset($error))
         <div class="alert alert-danger">
             <strong>Error:</strong> {{ $error }}
@@ -64,50 +66,45 @@
                                 data-bs-target="#collapse-{{ $index }}"
                                 aria-expanded="{{ $index === 0 ? 'true' : 'false' }}"
                                 aria-controls="collapse-{{ $index }}">
-                            <p style="margin:0"><strong>Account: </strong>{{ $data['account']['name'] }}</p>
+                            <p style="margin:0"><strong>Account: </strong>{{ $data->name }}</p>
                         </button>
                     </h2>
 
                     <div id="collapse-{{ $index }}" class="accordion-collapse collapse show" aria-labelledby="heading-{{ $index }}">
                         <div class="accordion-body">
-                            <p class="mb-0"><strong>Name: </strong>{{ $data['account']['name'] }}</p>
-                            <p><strong>ID: </strong>{{ $data['account']['id'] }}</p>
+                            <p class="mb-0"><strong>Name: </strong>{{ $data->name }}</p>
+                            <p><strong>ID: </strong>{{ $data->ga_account_id }}</p>
                             @if (count($data['properties']) > 0)
                                 <h6><strong>Properties:</strong></h6>
                                 <ul class="list-group">
-                                    @foreach ($data['properties'] as $propertyData)
+                                    @foreach ($data->properties as $property)
                                         @php
-                                            $property = $propertyData['raw'];
-                                            $meta = $propertyData['meta'];
+                                            $uniqueId = str_replace(['/', '.'], '_', $property->ga_property_id);
+                                            $meta = \App\Models\PropertyMetadata::where('google_property_id', $property->id)->first();
+                                            $pagespeed = \App\Models\PageSpeedResult::where('google_property_id', $property->id)->first();
+                                            $shouldBeOpen = session('expanded_property') === $property->ga_property_id;
                                         @endphp
                                         <li class="list-group-item">
-                                            @php
-                                                $property = $propertyData['raw'];
-                                                $meta = $propertyData['meta'];
-                                                $uniqueId = str_replace(['/', '.'], '_', $property->name);
-                                                $shouldBeOpen = session('expanded_property') === $property->name;
-                                                $pagespeed = \App\Models\PageSpeedResult::where('property_id', $property->name)->first();
-                                            @endphp
-
                                             <div class="d-flex justify-content-between align-items-center">
-                                                <h5 class="text-primary mb-0">{{ $property->displayName }}</h5>
+                                                <h5 class="text-primary mb-0">{{ $property->display_name }}</h5>
                                                 <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#propertyDetails-{{ $uniqueId }}">
                                                     Show/Hide Details
                                                 </button>
                                             </div>
 
                                             <p class="mb-2">
-                                                <strong>Time Zone:</strong> {{ $property->timeZone }} <br>
-                                                <strong>Currency:</strong> {{ $property->currencyCode }} <br>
-                                                <strong>Industry:</strong> {{ $property->industryCategory }} <br>
+                                                <strong>Time Zone:</strong> {{ $property->time_zone }} <br>
+                                                <strong>Currency:</strong> {{ $property->currency }} <br>
+                                                <strong>Industry:</strong> {{ $property->industry }} <br>
                                                 <strong>Service Level:</strong>
-                                                <span class="badge bg-success">{{ $property->serviceLevel }}</span>
+                                                <span class="badge bg-success">{{ $property->service_level }}</span>
                                             </p>
 
                                             <div class="collapse {{ $shouldBeOpen ? 'show' : '' }}" id="propertyDetails-{{ $uniqueId }}">
                                                 @if(Auth::user()->role === 'admin')
                                                     <form method="POST" action="{{ route('update.property.meta') }}" class="mb-3">
-                                                        <input type="hidden" name="property_id" value="{{ $property->name }}">
+                                                        @csrf
+                                                        <input type="hidden" name="property_id" value="{{ $property->ga_property_id  }}">
 
                                                         <div class="mb-2">
                                                             <label class="form-label">Tag</label>
@@ -132,7 +129,8 @@
                                                     </form>
 
                                                     <form method="POST" action="{{ route('pagespeed.scan') }}" class="mb-2">
-                                                        <input type="hidden" name="property_id" value="{{ $property->name }}">
+                                                        @csrf
+                                                        <input type="hidden" name="property_id" value="{{ $property->ga_property_id }}">
                                                         <div class="input-group">
                                                             <input type="text" name="url" placeholder="https://example.com" class="form-control" required>
                                                             <button class="btn btn-outline-success" type="submit">Scan PageSpeed</button>
