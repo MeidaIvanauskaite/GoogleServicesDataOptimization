@@ -4,7 +4,7 @@
     use Illuminate\Support\Facades\Http;
     use Google\Client;
     use Google\Service\GoogleAnalyticsAdmin;
-    use App\Models\PropertyMetadata;
+    use App\Models\GoogleAccount;
 
     class GoogleAnalyticsController extends Controller {
         public function index() {
@@ -32,66 +32,81 @@
         }
 
         public function fetchAccountsWithProperties(Request $request) {
+            $useCache = !$request->has('refresh');
             $search = $request->input('search');
-            $filterStatus = $request->input('status');
-            $filterTag = $request->input('tag');
+            $status = $request->input('status');
+            $tag = $request->input('tag');
+            
+            if ($useCache && GoogleAccount::count() > 0) {
+                $accounts = $this->filterAndSearch($search, $status, $tag);
+            } else {
+                $apiAccounts = $this->fetchAccountsFromAPI();
+                $this->storeAccountsAndProperties($apiAccounts);
+                $accounts = $this->filterAndSearch($search, $status, $tag);
+            }
 
+            return view('services', ['accounts' => $accounts]);
+        }
+
+        private function filterAndSearch($search, $status, $tag) {
+            return GoogleAccount::with(['properties' => function ($query) use ($search, $status, $tag) {
+                $query->with('meta');
+
+                if ($search) {
+                    $query->where('display_name', 'like', '%' . $search . '%');
+                }
+
+                if ($status || $tag) {
+                    $query->whereHas('meta', function ($metaQuery) use ($status, $tag) {
+                        if ($status) {
+                            $metaQuery->where('status', $status);
+                        }
+                        if ($tag) {
+                            $metaQuery->where('tag', $tag);
+                        }
+                    });
+                }
+            }])->get();
+        }
+
+
+        private function fetchAccountsFromAPI() {
             $client = new Client();
             $client->setAuthConfig(storage_path('credentials/google_credentials.json'));
             $client->addScope('https://www.googleapis.com/auth/analytics.readonly');
             $adminService = new GoogleAnalyticsAdmin($client);
 
-            try {
-                $accounts = $adminService->accounts->listAccounts();
-                $accountsWithProperties = [];
+            return $adminService->accounts->listAccounts();
+        }
 
-                foreach ($accounts->getAccounts() as $account) {
-                    $properties = $adminService->properties->listProperties([
-                        'filter' => 'parent:' . $account->getName(),
-                    ]);
+        private function storeAccountsAndProperties($apiAccounts) {
+            foreach ($apiAccounts->getAccounts() as $account) {
+                $ga = GoogleAccount::updateOrCreate(
+                    ['ga_account_id' => $account->getName()],
+                    ['name' => $account->getDisplayName()]
+                );
 
-                    $propertyList = [];
+                $client = new Client();
+                $client->setAuthConfig(storage_path('credentials/google_credentials.json'));
+                $client->addScope('https://www.googleapis.com/auth/analytics.readonly');
+                $adminService = new GoogleAnalyticsAdmin($client);
 
-                    foreach ($properties->getProperties() as $property) {
-                        $meta = PropertyMetadata::where('property_id', $property->getName())->first();
-
-                        if ($search && !str_contains(strtolower($property->getDisplayName()), strtolower($search))) {
-                            continue;
-                        }
-
-                        if ($filterStatus && (!$meta || $meta->status !== $filterStatus)) {
-                            continue;
-                        }
-
-                        if ($filterTag && (!$meta || $meta->tag !== $filterTag)) {
-                            continue;
-                        }
-
-                        $propertyList[] = [
-                            'raw' => $property,
-                            'meta' => $meta,
-                        ];
-                    }
-
-                    if (!empty($propertyList)) {
-                        $accountsWithProperties[] = [
-                            'account' => [
-                                'id' => $account->getName(),
-                                'name' => $account->getDisplayName(),
-                            ],
-                            'properties' => $propertyList,
-                        ];
-                    }
-                }
-
-                return view('services', [
-                    'accounts' => $accountsWithProperties,
-                    'search' => $search,
-                    'filterStatus' => $filterStatus,
-                    'filterTag' => $filterTag,
+                $apiProps = $adminService->properties->listProperties([
+                    'filter' => 'parent:' . $account->getName(),
                 ]);
-            } catch (\Exception $e) {
-                return view('services', ['accounts' => [], 'error' => $e->getMessage()]);
+
+                foreach ($apiProps->getProperties() as $property) {
+                    $ga->properties()->updateOrCreate(
+                        ['ga_property_id' => $property->getName()],
+                        [
+                            'display_name' => $property->getDisplayName(),
+                            'currency' => $property->getCurrencyCode(),
+                            'time_zone' => $property->getTimeZone(),
+                            'industry' => $property->getIndustryCategory(),
+                            'service_level' => $property->getServiceLevel(),
+                        ]
+                    );
+                }
             }
         }
     }
