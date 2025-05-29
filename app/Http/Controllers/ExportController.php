@@ -1,9 +1,6 @@
 <?php
     namespace App\Http\Controllers;
     use Illuminate\Http\Request;
-    use App\Models\PropertyMetadata;
-    use Google\Client;
-    use Google\Service\GoogleAnalyticsAdmin;
     use Barryvdh\DomPDF\Facade\Pdf;
 
     class ExportController extends Controller {
@@ -23,26 +20,17 @@
 
                 foreach ($properties as $prop) {
                     fputcsv($handle, [
-                        $prop['name'],
-                        $prop['timeZone'],
-                        $prop['currency'],
-                        $prop['industry'],
-                        $prop['tag'],
-                        $prop['status'],
-                        $prop['note'],
+                        $prop['name'], $prop['timeZone'], $prop['currency'], $prop['industry'], $prop['tag'], $prop['status'], $prop['note'],
                     ]);
                 }
-
                 fclose($handle);
             };
-
             return response()->stream($callback, 200, $headers);
         }
 
         public function exportPDF(Request $request) {
             $properties = $this->getFilteredProperties($request);
             $pdf = Pdf::loadView('exports.analytics_pdf', compact('properties'));
-
             return $pdf->download('analytics_export.pdf');
         }
 
@@ -51,52 +39,38 @@
             $status = $request->input('status');
             $tag = $request->input('tag');
 
-            $client = new Client();
-            $client->setAuthConfig(storage_path('credentials/google_credentials.json'));
-            $client->addScope('https://www.googleapis.com/auth/analytics.readonly');
-            $adminService = new GoogleAnalyticsAdmin($client);
+            $query = \App\Models\GoogleProperty::with(['meta', 'pagespeed']);
 
-            $accounts = $adminService->accounts->listAccounts();
-            $results = [];
-
-            foreach ($accounts->getAccounts() as $account) {
-                $properties = $adminService->properties->listProperties([
-                    'filter' => 'parent:' . $account->getName(),
-                ]);
-
-                foreach ($properties->getProperties() as $property) {
-                    $pagespeed = \App\Models\PageSpeedResult::where('property_id', $property->getName())->first();
-                    $meta = PropertyMetadata::where('property_id', $property->getName())->first();
-
-                    if ($search && !str_contains(strtolower($property->getDisplayName()), strtolower($search))) {
-                        continue;
-                    }
-
-                    if ($status && (!$meta || $meta->status !== $status)) {
-                        continue;
-                    }
-
-                    if ($tag && (!$meta || $meta->tag !== $tag)) {
-                        continue;
-                    }
-
-                    $results[] = [
-                        'name' => $property->getDisplayName(),
-                        'timeZone' => $property->getTimeZone(),
-                        'currency' => $property->getCurrencyCode(),
-                        'industry' => $property->getIndustryCategory(),
-                        'tag' => $meta->tag ?? '',
-                        'status' => $meta->status ?? '',
-                        'note' => $meta->note ?? '',
-                        'url' => $pagespeed->url ?? '',
-                        'pagespeed_score' => $pagespeed->performance_score ?? '',
-                        'lcp' => $pagespeed->metrics['LCP'] ?? '',
-                        'fid' => $pagespeed->metrics['FID'] ?? '',
-                        'cls' => $pagespeed->metrics['CLS'] ?? '',
-                    ];
-                }
+            if ($search) {
+                $query->where('display_name', 'like', '%' . $search . '%');
             }
 
-            return $results;
+            if ($status || $tag) {
+                $query->whereHas('meta', function ($metaQuery) use ($status, $tag) {
+                    if ($status) {
+                        $metaQuery->where('status', $status);
+                    }
+                    if ($tag) {
+                        $metaQuery->where('tag', $tag);
+                    }
+                });
+            }
+
+            return $query->get()->map(function ($property) {
+                return [
+                    'name' => $property->display_name,
+                    'timeZone' => $property->time_zone,
+                    'currency' => $property->currency,
+                    'industry' => $property->industry,
+                    'tag' => $property->meta->tag ?? '',
+                    'status' => $property->meta->status ?? '',
+                    'note' => $property->meta->note ?? '',
+                    'url' => $property->pagespeed->url ?? '',
+                    'pagespeed_score' => $property->pagespeed->performance_score ?? '',
+                    'lcp' => $property->pagespeed->metrics['LCP'] ?? '',
+                    'fid' => $property->pagespeed->metrics['FID'] ?? '',
+                    'cls' => $property->pagespeed->metrics['CLS'] ?? '',
+                ];
+            });
         }
     }
