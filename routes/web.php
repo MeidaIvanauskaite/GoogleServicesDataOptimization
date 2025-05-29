@@ -17,11 +17,14 @@
     Route::middleware(['auth'])->group(function () {
         Route::get('/services', [GoogleAnalyticsController::class, 'fetchAccountsWithProperties'])->name('services');
     });
-
-    Route::middleware(['auth'])->post('/update-property-meta', [PropertyMetadataController::class, 'update'])->name('update.property.meta');
+    
+    Route::middleware(['auth'])->group(function () {
+        Route::post('/update-property-meta', [PropertyMetadataController::class, 'update'])->name('update.property.meta');
+        Route::post('/pagespeed-scan', [PageSpeedController::class, 'scan'])->name('pagespeed.scan');
+    });
+    
     Route::get('/export/csv', [ExportController::class, 'exportCSV'])->name('export.csv');
     Route::get('/export/pdf', [ExportController::class, 'exportPDF'])->name('export.pdf');
-    Route::post('/pagespeed-scan', [PageSpeedController::class, 'scan'])->name('pagespeed.scan');
 
     Route::middleware(['auth'])->group(function () {
         Route::get('/users', [UserManagementController::class, 'index'])->middleware('admin')->name('admin.users');
@@ -41,6 +44,11 @@
             return response()->json(['error' => $e->getMessage()]);
         }
     });
+
+    Route::get('/service-accounts/{accountId}', [GoogleAnalyticsController::class, 'fetchWebProperties']);
+
+    require __DIR__.'/auth.php';
+
 
     Route::get('/service-accounts/{accountId}', [GoogleAnalyticsController::class, 'fetchWebProperties']);
 
