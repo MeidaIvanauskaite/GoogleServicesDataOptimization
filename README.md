@@ -88,8 +88,3 @@ paslaugos paskyrą per Google Cloud, sugeneruoti paslaugos paskyros raktą, atsi
 kredencialų JSON failą ir įdėti jį į numatytą rakto kelią .env faile.
 6. Galiausiai galima atidaryti programą atsidarius http://localhost/ langą naršyklėje, kuris
 rodys prisijungimo puslapį.
-Update .env file with your keys
-Update /storage/credentials/google_credentials.json file with Google Cliud service account generated key
-Terminal command: chmod +x start.sh
-Terminal command: ./start.sh
-Then open http://localhost/
