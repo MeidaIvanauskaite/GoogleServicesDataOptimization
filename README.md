@@ -70,8 +70,9 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
 1. Create and update .env file with your keys
 2. Update /storage/credentials/google_credentials.json file with Google Cloud service account generated key
 3. Start Docker
-4. Terminal command: ./start.sh
-5. Open http://localhost/ and your good to go
+4. Terminal command: chmod +x start.sh
+5. Terminal command: ./start.sh
+6. Open http://localhost/ and your good to go
 
 ## Programos atsisiuntimo ir paleidimo instrukcijos:
 
@@ -80,7 +81,7 @@ https://github.com/MeidaIvanauskaite/GoogleServicesDataOptimization.git. (wsl.lo
 2. Sukurkite .env failą nukopijuojant .env.example failo turinį. Šiame faile reikia pridėti
 Google paslaugų paskyros rakto kelią ir PageSpeed API raktą.
 3. Reikia atsisiųsti Docker ir atidaryti jį programos naudojimo metu.
-4. Programos paleidimui reikia naudoti terminalo komandą ./start.sh. Tai paleis paleidimo
+4. Programos paleidimui reikia naudoti terminalo komandas "chmod +x start.sh" ir "./start.sh". Tai paleis paleidimo
 scenarijų, kuris sukurs Docker konteinerius, įdiegs kompozitoriaus priklausomybes,
 vykdys migracijas, įdiegs Node ir Vite priklausomybes ir pradės Vite.
 5. Reikia pridėti Google paslaugų paskyrą prie programos. Tam padaryti reikia sukurti
